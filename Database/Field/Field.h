@@ -23,6 +23,7 @@ public:
     }
     void validateField();
     int getHash();
+    string represent();
     string data;
     Type type;
 };

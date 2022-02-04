@@ -5,6 +5,6 @@
 #include "Record.h"
 
 void Record::print() {
-    for (int i = 0; i < c; i++) cout << F[i]->data << ' ';
+    for (int i = 0; i < c; i++) cout << F[i]->represent() << ' ';
     cout << endl;
 }

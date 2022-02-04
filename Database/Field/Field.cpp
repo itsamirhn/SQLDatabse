@@ -30,3 +30,14 @@ void Field::validateField() {
     if (type == Type::Timestamp) rgx = regex("^\\d{4}\\/(0?[1-9]|1[012])\\/(0?[1-9]|[12][0-9]|3[01])$");
     if (!regex_match(data, rgx)) throw invalid_argument("Data doesn't match with type");
 }
+
+string Field::represent() {
+    if (type == Type::Integer) return data;
+    if (type == Type::Timestamp) return data;
+    if (type == Type::String) {
+        string tmp = "";
+        for (int i = 1; i + 1 < (int)(data.size()); i++) tmp += data[i];
+        return tmp;
+    }
+    throw invalid_argument("Invalid Type.");
+}
