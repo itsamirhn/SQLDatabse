@@ -1,0 +1,3 @@
+/Users/amir/w/Personal/Training/Sarah/SQL/cmake-build-debug/CMakeFiles/rebuild_cache.dir
+/Users/amir/w/Personal/Training/Sarah/SQL/cmake-build-debug/CMakeFiles/edit_cache.dir
+/Users/amir/w/Personal/Training/Sarah/SQL/cmake-build-debug/CMakeFiles/SQL.dir
