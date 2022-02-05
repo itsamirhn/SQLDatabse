@@ -37,11 +37,11 @@ public:
     Column* getColumn(string title);
     Type* getColumnsTypes();
     vector<string> getColumnTitles();
-    void insert(Record *record);
+    void insert(Record *record, int defaultId = 0);
     vector<Record* > select(vector<string> columns, Condition* condition);
-    int remove(Condition* condition);
+    vector<int> remove(Condition* condition);
     int findNewID();
-    Node *createNewID();
+    Node *createNewID(int defaultId = 0);
     void print();
 };
 

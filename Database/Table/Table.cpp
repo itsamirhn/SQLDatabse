@@ -5,10 +5,10 @@
 #include "Table.h"
 using namespace std;
 
-void Table::insert(Record *record) {
+void Table::insert(Record *record, int defaultId) {
     if (record->c + 1 != c) throw invalid_argument("Record columns number doesn't match to Table columns number");
     for (int i = 1; i < c; i++) if (record->F[i - 1]->type != C[i]->type) throw invalid_argument("Record columns type doesn't match to Table columns type");
-    Node *idNode = createNewID();
+    Node *idNode = createNewID(defaultId);
     Node *prev = idNode;
     for (int i = 1; i < c; i++) {
         Node *next = C[i]->insertField(record->F[i - 1]);
@@ -34,11 +34,11 @@ Table::select(vector<string> columns, Condition* condition) {
     return records;
 }
 
-int Table::remove(Condition *condition) {
+vector<int> Table::remove(Condition *condition) {
     Field *f = new Field(condition->value, getColumn(condition->column)->type);
     Node* node = getColumn(condition->column)->getNode(condition->op, f);
     int conditionColumnIdx = getColumnIdx(condition->column);
-    int cnt = 0;
+    vector<int> ids;
     while (node != nullptr) {
         int id = 0;
         for (int i = 0; i < c; i++) {
@@ -49,11 +49,11 @@ int Table::remove(Condition *condition) {
             node = next;
         }
         n--;
-        cnt++;
+        ids.push_back(id);
         removedIds.insert(id);
         node = getColumn(condition->column)->getNode(condition->op, f);
     }
-    return cnt;
+    return ids;
 }
 
 int Table::findNewID() {
@@ -64,11 +64,14 @@ int Table::findNewID() {
     return i;
 }
 
-Node* Table::createNewID() {
-    int i = findNewID();
+Node* Table::createNewID(int defaultId) {
+    int i = 0;
+    if (defaultId == 0) i = findNewID();
+    else if (id > 0) i = defaultId;
+    else throw invalid_argument("ID can't be negative");
     Field *idField = new Field(i);
+    if (C[0]->getNode(Operator::Equal, idField) != nullptr) throw invalid_argument("Duplicate ID not allowed");
     Node *idNode = C[0]->insertField(idField);
-
     return idNode;
 }
 

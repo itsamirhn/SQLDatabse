@@ -40,9 +40,8 @@ void Database::updateTable(string tableName, string *data, string column, Operat
     Table *t = getTable(tableName);
     Record *r = new Record(t->c - 1, data, t->getColumnsTypes());
     Condition* condition = new Condition(column, op, value);
-    int cnt = t->remove(condition);
-    // TODO: use old ids
-    for (int i = 0; i < cnt; i++) t->insert(r);
+    vector<int> ids = t->remove(condition);
+    for (int id : ids) t->insert(r, id);
 }
 
 vector<string> Database::extractDataVector(string q) {
