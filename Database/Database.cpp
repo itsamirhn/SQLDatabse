@@ -24,10 +24,23 @@ void Database::insertToTable(string tableName, string *data) {
     t->insert(r);
 }
 
-vector<Record *> Database::selectFromTable(string tableName, vector<string> columns, string column, Operator op, string value) {
+vector<Record *> Database::selectOneFromTable(string tableName, vector<string> columns, string column, Operator op, string value) {
     Table *t = getTable(tableName);
     Condition* condition = new Condition(column, op, value);
-    return t->select(columns, condition);
+    return t->selectOneCondition(columns, condition);
+}
+
+vector<Record *>
+Database::selectTwoFromTable(string tableName, vector<string> columns, string column1, Operator op1, string value1,
+                             string column2, Operator op2, string value2, char mergeOp) {
+    Table *t = getTable(tableName);
+    Condition* condition1 = new Condition(column1, op1, value1);
+    Condition* condition2 = new Condition(column2, op2, value2);
+    bool isAnd = false;
+    if (mergeOp == '&') isAnd = true;
+    else if (mergeOp == '|') isAnd = false;
+    else throw invalid_argument("Invalid merging operator (& or |)");
+    return t->selectTwoCondition(columns, condition1, condition2, isAnd);
 }
 
 void Database::deleteFromTable(string tableName, string column, Operator op, string value) {
@@ -65,7 +78,7 @@ pair<string, string> Database::splitDataAndType(string q) {
 
 void Database::query(string q) {
     smatch matches;
-    regex createRgx("CREATE\\s+TABLE\\s+([a-zA-Z0-9]+)\\s+\\((.*)\\)");
+    regex createRgx("^CREATE\\s+TABLE\\s+([a-zA-Z0-9]+)\\s+\\((.*)\\)$");
     if (regex_search(q, matches, createRgx)) {
         string tableName = matches[1].str();
         vector<string> v = extractDataVector(matches[2].str());
@@ -80,7 +93,7 @@ void Database::query(string q) {
         createTable(tableName, c, titles, types);
         return;
     }
-    regex insertRgx("INSERT\\s+INTO\\s+([a-zA-Z0-9]+)\\s+VALUES\\s+\\((.*)\\)");
+    regex insertRgx("^INSERT\\s+INTO\\s+([a-zA-Z0-9]+)\\s+VALUES\\s+\\((.*)\\)$");
     if (regex_search(q, matches, insertRgx)) {
         string tableName = matches[1].str();
         vector<string> v = extractDataVector(matches[2].str());
@@ -90,8 +103,8 @@ void Database::query(string q) {
         insertToTable(tableName, data);
         return;
     }
-    regex selectRgx("SELECT\\s+(?:\\((.*)\\)|(\\*))\\s+FROM\\s+([a-zA-Z0-9]+)\\s+WHERE\\s+(\\w+)\\s*(==|>=|<=|>|<)\\s*(.+)");
-    if (regex_search(q, matches, selectRgx)) {
+    regex select1Rgx("^SELECT\\s+(?:\\((.*)\\)|(\\*))\\s+FROM\\s+([a-zA-Z0-9]+)\\s+WHERE\\s+(\\w+)\\s*(==|>=|<=|>|<)\\s*(\\w+)$");
+    if (regex_search(q, matches, select1Rgx)) {
         string tableName = matches[3].str();
         string conditionColumn = matches[4].str();
         string conditionOperator = matches[5].str();
@@ -99,11 +112,32 @@ void Database::query(string q) {
         vector<string> columns;
         if (matches[2].str() == "*") columns = getTable(tableName)->getColumnTitles();
         else columns = extractDataVector(matches[1].str());
-        vector<Record *> result = selectFromTable(tableName, columns, conditionColumn, convertStringToOperator(conditionOperator), conditionValue);
+        vector<Record *> result = selectOneFromTable(tableName, columns, conditionColumn,
+                                                     convertStringToOperator(conditionOperator), conditionValue);
         for (Record* record : result) record->print();
         return;
     }
-    regex deleteRgx("DELETE\\s+FROM\\s+([a-zA-Z0-9]+)\\s+WHERE\\s+(\\w+)\\s*(==|>=|<=|>|<)\\s*(.+)");
+    regex select2Rgx("^SELECT\\s+(?:\\((.*)\\)|(\\*))\\s+FROM\\s+([a-zA-Z0-9]+)\\s+WHERE\\s+(\\w+)\\s*(==|>=|<=|>|<)\\s*(.+)\\s+([&|])\\s+(\\w+)\\s*(==|>=|<=|>|<)\\s*(\\w+)$");
+    if (regex_search(q, matches, select2Rgx)) {
+        string tableName = matches[3].str();
+        string conditionColumn1 = matches[4].str();
+        string conditionOperator1 = matches[5].str();
+        string conditionValue1 = matches[6].str();
+        char mergeOperator = matches[7].str()[0];
+        string conditionColumn2 = matches[8].str();
+        string conditionOperator2 = matches[9].str();
+        string conditionValue2 = matches[10].str();
+        vector<string> columns;
+        if (matches[2].str() == "*") columns = getTable(tableName)->getColumnTitles();
+        else columns = extractDataVector(matches[1].str());
+        vector<Record *> result = selectTwoFromTable(tableName, columns,
+                                                     conditionColumn1, convertStringToOperator(conditionOperator1), conditionValue1,
+                                                     conditionColumn2, convertStringToOperator(conditionOperator2), conditionValue2,
+                                                     mergeOperator);
+        for (Record* record : result) record->print();
+        return;
+    }
+    regex deleteRgx("^DELETE\\s+FROM\\s+([a-zA-Z0-9]+)\\s+WHERE\\s+(\\w+)\\s*(==|>=|<=|>|<)\\s*(\\w+)$");
     if (regex_search(q, matches, deleteRgx)) {
         string tableName = matches[1].str();
         string conditionColumn = matches[2].str();
@@ -112,7 +146,7 @@ void Database::query(string q) {
         deleteFromTable(tableName, conditionColumn, convertStringToOperator(conditionOperator), conditionValue);
         return;
     }
-    regex updateRgx("UPDATE\\s+([a-zA-Z0-9]+)\\s+SET\\s+\\((.*)\\)\\s+WHERE\\s+(\\w+)\\s*(==|>=|<=|>|<)\\s*(.+)");
+    regex updateRgx("^UPDATE\\s+([a-zA-Z0-9]+)\\s+SET\\s+\\((.*)\\)\\s+WHERE\\s+(\\w+)\\s*(==|>=|<=|>|<)\\s*(\\w+)$");
     if (regex_search(q, matches, updateRgx)) {
         string tableName = matches[1].str();
         vector<string> v = extractDataVector(matches[2].str());
