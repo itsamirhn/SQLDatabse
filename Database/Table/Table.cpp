@@ -28,7 +28,7 @@ Table::selectOneCondition(vector<string> columns, Condition* condition) {
     vector<Record*> records;
     int conditionColumnIdx = getColumnIdx(condition->column);
     for (Node* node : nodes) records.push_back(getRecordFromNode(conditionColumnIdx, node));
-    sort(records.begin(), records.end(), [] (const auto& l, const auto& r) { return l->F[0]->getHash() < r->F[0]->getHash(); });
+    sort(records.begin(), records.end(), [] (const Record* l, const Record* r) { return l->F[0]->getHash() < r->F[0]->getHash(); });
     vector<Record*> sortedCustomRecords;
     for (Record* record : records) sortedCustomRecords.push_back(getCustomRecordFromRecord(columnsIdx, record));
     return records;
@@ -41,13 +41,13 @@ Table::selectTwoCondition(vector<string> columns, Condition *condition1, Conditi
     vector<Record *> part2 = selectOneCondition(allColumns, condition2);
     vector<Record *> unionPart, intersectionPart;
     int i = 0, j = 0;
-    while (i < part1.size() && j < part2.size()) {
+    while (i < (int)part1.size() && j < (int)part2.size()) {
         if (part1[i]->F[0]->getHash() < part2[j]->F[0]->getHash()) unionPart.push_back(part1[i++]);
         else if (part1[i]->F[0]->getHash() > part2[j]->F[0]->getHash()) unionPart.push_back(part2[j++]);
         else unionPart.push_back(part1[i]), intersectionPart.push_back(part1[i]), i++, j++;
     }
-    while (i < part1.size()) unionPart.push_back(part1[i++]);
-    while (j < part2.size()) unionPart.push_back(part2[j++]);
+    while (i < (int)part1.size()) unionPart.push_back(part1[i++]);
+    while (j < (int)part2.size()) unionPart.push_back(part2[j++]);
     vector<Record *> results;
     if (isAnd) results = intersectionPart;
     else results = unionPart;

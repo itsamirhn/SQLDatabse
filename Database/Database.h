@@ -13,7 +13,6 @@
 using namespace std;
 
 class Database {
-    int n;
     unordered_map<string, Table*> T;
     pair<string, string> splitDataAndType(string q);
     vector<string> extractDataVector(string q);
