@@ -30,7 +30,11 @@ class Database {
                                    string column1, Operator op1, string value1,
                                    string column2, Operator op2, string value2,
                                    char mergeOp);
-    void updateTable(string tableName, string *data, string column, Operator op, string value);
+    void updateOneFromTable(string tableName, string *data, string column, Operator op, string value);
+    void updateTwoFromTable(string tableName, string *data,
+                     string column1, Operator op1, string value1,
+                     string column2, Operator op2, string value2,
+                     char mergeOp);
 public:
     void query(string q);
 };

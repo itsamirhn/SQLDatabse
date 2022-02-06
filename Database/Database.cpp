@@ -59,10 +59,21 @@ vector<int> Database::deleteTwoFromTable(string tableName, string column1, Opera
     return t->remove(records);
 }
 
-void Database::updateTable(string tableName, string *data, string column, Operator op, string value) {
+void Database::updateOneFromTable(string tableName, string *data, string column, Operator op, string value) {
     Table *t = getTable(tableName);
     Record *r = new Record(t->c - 1, data, t->getColumnsTypes());
     vector<int> ids = deleteOneFromTable(tableName, column, op, value);
+    for (int id : ids) t->insert(r, id);
+}
+
+void Database::updateTwoFromTable(string tableName, string *data, string column1, Operator op1, string value1,
+                                  string column2, Operator op2, string value2, char mergeOp) {
+    Table *t = getTable(tableName);
+    Record *r = new Record(t->c - 1, data, t->getColumnsTypes());
+    vector<int> ids = deleteTwoFromTable(tableName,
+                                         column1, op1, value1,
+                                         column2, op2, value2,
+                                         mergeOp);
     for (int id : ids) t->insert(r, id);
 }
 
@@ -146,8 +157,17 @@ void Database::query(string q) {
         for (Record* record : result) record->print();
         return;
     }
-    regex delete1Rgx("^DELETE\\s+FROM\\s+([a-zA-Z0-9]+)\\s+WHERE\\s+(\\w+)\\s*(==|>=|<=|>|<)\\s*(\\w+)\\s+([&|])\\s+(\\w+)\\s*(==|>=|<=|>|<)\\s*(\\w+)$");
+    regex delete1Rgx("^DELETE\\s+FROM\\s+([a-zA-Z0-9]+)\\s+WHERE\\s+(\\w+)\\s*(==|>=|<=|>|<)\\s*(\\w+)$");
     if (regex_search(q, matches, delete1Rgx)) {
+        string tableName = matches[1].str();
+        string conditionColumn = matches[2].str();
+        string conditionOperator = matches[3].str();
+        string conditionValue = matches[4].str();
+        deleteOneFromTable(tableName, conditionColumn, convertStringToOperator(conditionOperator), conditionValue);
+        return;
+    }
+    regex delete2Rgx("^DELETE\\s+FROM\\s+([a-zA-Z0-9]+)\\s+WHERE\\s+(\\w+)\\s*(==|>=|<=|>|<)\\s*(\\w+)\\s+([&|])\\s+(\\w+)\\s*(==|>=|<=|>|<)\\s*(\\w+)$");
+    if (regex_search(q, matches, delete2Rgx)) {
         string tableName = matches[1].str();
         string conditionColumn1 = matches[2].str();
         string conditionOperator1 = matches[3].str();
@@ -162,17 +182,8 @@ void Database::query(string q) {
                            mergeOperator);
         return;
     }
-    regex delete2Rgx("^DELETE\\s+FROM\\s+([a-zA-Z0-9]+)\\s+WHERE\\s+(\\w+)\\s*(==|>=|<=|>|<)\\s*(\\w+)$");
-    if (regex_search(q, matches, delete2Rgx)) {
-        string tableName = matches[1].str();
-        string conditionColumn = matches[2].str();
-        string conditionOperator = matches[3].str();
-        string conditionValue = matches[4].str();
-        deleteOneFromTable(tableName, conditionColumn, convertStringToOperator(conditionOperator), conditionValue);
-        return;
-    }
-    regex updateRgx("^UPDATE\\s+([a-zA-Z0-9]+)\\s+SET\\s+\\((.*)\\)\\s+WHERE\\s+(\\w+)\\s*(==|>=|<=|>|<)\\s*(\\w+)$");
-    if (regex_search(q, matches, updateRgx)) {
+    regex update1Rgx("^UPDATE\\s+([a-zA-Z0-9]+)\\s+SET\\s+\\((.*)\\)\\s+WHERE\\s+(\\w+)\\s*(==|>=|<=|>|<)\\s*(\\w+)$");
+    if (regex_search(q, matches, update1Rgx)) {
         string tableName = matches[1].str();
         vector<string> v = extractDataVector(matches[2].str());
         string conditionColumn = matches[3].str();
@@ -181,7 +192,27 @@ void Database::query(string q) {
         int c = v.size();
         string *data = new string [c];
         for (int i = 0; i < c; i++) data[i] = v[i];
-        updateTable(tableName, data, conditionColumn, convertStringToOperator(conditionOperator), conditionValue);
+        updateOneFromTable(tableName, data, conditionColumn, convertStringToOperator(conditionOperator), conditionValue);
+        return;
+    }
+    regex update2Rgx("^UPDATE\\s+([a-zA-Z0-9]+)\\s+SET\\s+\\((.*)\\)\\s+WHERE\\s+(\\w+)\\s*(==|>=|<=|>|<)\\s*(\\w+)\\s+([&|])\\s+(\\w+)\\s*(==|>=|<=|>|<)\\s*(\\w+)$");
+    if (regex_search(q, matches, update2Rgx)) {
+        string tableName = matches[1].str();
+        vector<string> v = extractDataVector(matches[2].str());
+        string conditionColumn1 = matches[3].str();
+        string conditionOperator1 = matches[4].str();
+        string conditionValue1 = matches[5].str();
+        char mergeOperator = matches[6].str()[0];
+        string conditionColumn2 = matches[7].str();
+        string conditionOperator2 = matches[8].str();
+        string conditionValue2 = matches[9].str();
+        int c = v.size();
+        string *data = new string [c];
+        for (int i = 0; i < c; i++) data[i] = v[i];
+        updateTwoFromTable(tableName, data,
+                           conditionColumn1, convertStringToOperator(conditionOperator1), conditionValue1,
+                           conditionColumn2, convertStringToOperator(conditionOperator2), conditionValue2,
+                           mergeOperator);
         return;
     }
     regex printRgx("PRINT\\s+([a-zA-Z0-9]+)");
