@@ -18,9 +18,11 @@ int Field::getHash() {
         }
         throw invalid_argument("Invalid Date.");
     }
-    int h = 0;
-    for (int i = 0; i < (int)(data.size()); i++) h = (1LL * h * HASH_BASE % HASH_MOD + (int)(data[i])) % HASH_MOD;
-    return h;
+    if (type == Type::String) {
+        int h = 0;
+        for (int i = 1; i + 1 < (int)(data.size()); i++) h = (1LL * h * HASH_BASE % HASH_MOD + (int)(data[i])) % HASH_MOD;
+        return h;
+    }
 }
 
 void Field::validateField() {
