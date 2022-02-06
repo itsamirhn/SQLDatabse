@@ -43,17 +43,16 @@ Database::selectTwoFromTable(string tableName, vector<string> columns, string co
     return t->selectTwoCondition(columns, condition1, condition2, isAnd);
 }
 
-void Database::deleteFromTable(string tableName, string column, Operator op, string value) {
+vector<int> Database::deleteOneFromTable(string tableName, string column, Operator op, string value) {
     Table *t = getTable(tableName);
-    Condition* condition = new Condition(column, op, value);
-    t->remove(condition);
+    vector<Record*> records = selectOneFromTable(tableName, t->getColumnTitles(), column, op, value);
+    return t->remove(records);
 }
 
 void Database::updateTable(string tableName, string *data, string column, Operator op, string value) {
     Table *t = getTable(tableName);
     Record *r = new Record(t->c - 1, data, t->getColumnsTypes());
-    Condition* condition = new Condition(column, op, value);
-    vector<int> ids = t->remove(condition);
+    vector<int> ids = deleteOneFromTable(tableName, column, op, value);
     for (int id : ids) t->insert(r, id);
 }
 
@@ -143,7 +142,7 @@ void Database::query(string q) {
         string conditionColumn = matches[2].str();
         string conditionOperator = matches[3].str();
         string conditionValue = matches[4].str();
-        deleteFromTable(tableName, conditionColumn, convertStringToOperator(conditionOperator), conditionValue);
+        deleteOneFromTable(tableName, conditionColumn, convertStringToOperator(conditionOperator), conditionValue);
         return;
     }
     regex updateRgx("^UPDATE\\s+([a-zA-Z0-9]+)\\s+SET\\s+\\((.*)\\)\\s+WHERE\\s+(\\w+)\\s*(==|>=|<=|>|<)\\s*(\\w+)$");

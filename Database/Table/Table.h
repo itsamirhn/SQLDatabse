@@ -40,7 +40,7 @@ public:
     void insert(Record *record, int defaultId = 0);
     vector<Record* > selectOneCondition(vector<string> columns, Condition* condition);
     vector<Record* > selectTwoCondition(vector<string> columns, Condition* condition1, Condition* condition2, bool isAnd);
-    vector<int> remove(Condition* condition);
+    vector<int> remove(vector<Record*> fullRecords);
     int findNewID();
     Node *createNewID(int defaultId = 0);
     void print();

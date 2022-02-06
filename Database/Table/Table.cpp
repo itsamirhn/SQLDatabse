@@ -58,16 +58,14 @@ Table::selectTwoCondition(vector<string> columns, Condition *condition1, Conditi
     return customRecords;
 }
 
-vector<int> Table::remove(Condition *condition) {
-    Field *f = new Field(condition->value, getColumn(condition->column)->type);
-    Node* node = getColumn(condition->column)->getNode(condition->op, f);
-    int conditionColumnIdx = getColumnIdx(condition->column);
+vector<int> Table::remove(vector<Record *> fullRecords) {
     vector<int> ids;
-    while (node != nullptr) {
-        int id = 0;
+    for (Record* record : fullRecords) {
+        if (record->c != c) throw invalid_argument("Removing records shouldn't be custom and have to be complete.");
+        int id = record->F[0]->getHash();
+        Node* node = C[0]->getNode(Operator::Equal, record->F[0]);
         for (int i = 0; i < c; i++) {
-            if ((i + conditionColumnIdx) % c == 0) id = C[(i + conditionColumnIdx) % c]->getField(node)->getHash();
-            C[(i + conditionColumnIdx) % c]->removeNode(node);
+            C[i]->removeNode(node);
             Node *next = node->nextField;
             delete node;
             node = next;
@@ -75,7 +73,6 @@ vector<int> Table::remove(Condition *condition) {
         n--;
         ids.push_back(id);
         removedIds.insert(id);
-        node = getColumn(condition->column)->getNode(condition->op, f);
     }
     return ids;
 }
