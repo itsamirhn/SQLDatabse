@@ -123,7 +123,7 @@ void Database::query(string q) {
         insertToTable(tableName, data);
         return;
     }
-    regex select1Rgx("^SELECT\\s+(?:\\((.*)\\)|(\\*))\\s+FROM\\s+([a-zA-Z0-9]+)\\s+WHERE\\s+(\\w+)\\s*(==|>=|<=|>|<)\\s*(\\w+)$");
+    regex select1Rgx("^SELECT\\s+(?:\\((.*)\\)|(\\*))\\s+FROM\\s+([a-zA-Z0-9]+)\\s+WHERE\\s+(\\w+)\\s*(==|>=|<=|>|<)\\s*(\\S+)$");
     if (regex_search(q, matches, select1Rgx)) {
         string tableName = matches[3].str();
         string conditionColumn = matches[4].str();
@@ -137,7 +137,7 @@ void Database::query(string q) {
         for (Record* record : result) record->print();
         return;
     }
-    regex select2Rgx("^SELECT\\s+(?:\\((.*)\\)|(\\*))\\s+FROM\\s+([a-zA-Z0-9]+)\\s+WHERE\\s+(\\w+)\\s*(==|>=|<=|>|<)\\s*(\\w+)\\s+([&|])\\s+(\\w+)\\s*(==|>=|<=|>|<)\\s*(\\w+)$");
+    regex select2Rgx("^SELECT\\s+(?:\\((.*)\\)|(\\*))\\s+FROM\\s+([a-zA-Z0-9]+)\\s+WHERE\\s+(\\w+)\\s*(==|>=|<=|>|<)\\s*(\\S+)\\s+([&|])\\s+(\\w+)\\s*(==|>=|<=|>|<)\\s*(\\S+)$");
     if (regex_search(q, matches, select2Rgx)) {
         string tableName = matches[3].str();
         string conditionColumn1 = matches[4].str();
@@ -157,7 +157,7 @@ void Database::query(string q) {
         for (Record* record : result) record->print();
         return;
     }
-    regex delete1Rgx("^DELETE\\s+FROM\\s+([a-zA-Z0-9]+)\\s+WHERE\\s+(\\w+)\\s*(==|>=|<=|>|<)\\s*(\\w+)$");
+    regex delete1Rgx("^DELETE\\s+FROM\\s+([a-zA-Z0-9]+)\\s+WHERE\\s+(\\w+)\\s*(==|>=|<=|>|<)\\s*(\\S+)$");
     if (regex_search(q, matches, delete1Rgx)) {
         string tableName = matches[1].str();
         string conditionColumn = matches[2].str();
@@ -166,7 +166,7 @@ void Database::query(string q) {
         deleteOneFromTable(tableName, conditionColumn, convertStringToOperator(conditionOperator), conditionValue);
         return;
     }
-    regex delete2Rgx("^DELETE\\s+FROM\\s+([a-zA-Z0-9]+)\\s+WHERE\\s+(\\w+)\\s*(==|>=|<=|>|<)\\s*(\\w+)\\s+([&|])\\s+(\\w+)\\s*(==|>=|<=|>|<)\\s*(\\w+)$");
+    regex delete2Rgx("^DELETE\\s+FROM\\s+([a-zA-Z0-9]+)\\s+WHERE\\s+(\\w+)\\s*(==|>=|<=|>|<)\\s*(\\S+)\\s+([&|])\\s+(\\w+)\\s*(==|>=|<=|>|<)\\s*(\\S+)$");
     if (regex_search(q, matches, delete2Rgx)) {
         string tableName = matches[1].str();
         string conditionColumn1 = matches[2].str();
@@ -182,7 +182,7 @@ void Database::query(string q) {
                            mergeOperator);
         return;
     }
-    regex update1Rgx("^UPDATE\\s+([a-zA-Z0-9]+)\\s+SET\\s+\\((.*)\\)\\s+WHERE\\s+(\\w+)\\s*(==|>=|<=|>|<)\\s*(\\w+)$");
+    regex update1Rgx("^UPDATE\\s+([a-zA-Z0-9]+)\\s+SET\\s+\\((.*)\\)\\s+WHERE\\s+(\\w+)\\s*(==|>=|<=|>|<)\\s*(\\S+)$");
     if (regex_search(q, matches, update1Rgx)) {
         string tableName = matches[1].str();
         vector<string> v = extractDataVector(matches[2].str());
@@ -195,7 +195,7 @@ void Database::query(string q) {
         updateOneFromTable(tableName, data, conditionColumn, convertStringToOperator(conditionOperator), conditionValue);
         return;
     }
-    regex update2Rgx("^UPDATE\\s+([a-zA-Z0-9]+)\\s+SET\\s+\\((.*)\\)\\s+WHERE\\s+(\\w+)\\s*(==|>=|<=|>|<)\\s*(\\w+)\\s+([&|])\\s+(\\w+)\\s*(==|>=|<=|>|<)\\s*(\\w+)$");
+    regex update2Rgx("^UPDATE\\s+([a-zA-Z0-9]+)\\s+SET\\s+\\((.*)\\)\\s+WHERE\\s+(\\w+)\\s*(==|>=|<=|>|<)\\s*(\\S+)\\s+([&|])\\s+(\\w+)\\s*(==|>=|<=|>|<)\\s*(\\S+)$");
     if (regex_search(q, matches, update2Rgx)) {
         string tableName = matches[1].str();
         vector<string> v = extractDataVector(matches[2].str());
