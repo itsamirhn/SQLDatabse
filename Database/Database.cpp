@@ -49,6 +49,16 @@ vector<int> Database::deleteOneFromTable(string tableName, string column, Operat
     return t->remove(records);
 }
 
+vector<int> Database::deleteTwoFromTable(string tableName, string column1, Operator op1, string value1, string column2,
+                                         Operator op2, string value2, char mergeOp) {
+    Table *t = getTable(tableName);
+    vector<Record*> records = selectTwoFromTable(tableName, t->getColumnTitles(),
+                                                 column1, op1, value1,
+                                                 column2, op2, value2,
+                                                 mergeOp);
+    return t->remove(records);
+}
+
 void Database::updateTable(string tableName, string *data, string column, Operator op, string value) {
     Table *t = getTable(tableName);
     Record *r = new Record(t->c - 1, data, t->getColumnsTypes());
@@ -116,7 +126,7 @@ void Database::query(string q) {
         for (Record* record : result) record->print();
         return;
     }
-    regex select2Rgx("^SELECT\\s+(?:\\((.*)\\)|(\\*))\\s+FROM\\s+([a-zA-Z0-9]+)\\s+WHERE\\s+(\\w+)\\s*(==|>=|<=|>|<)\\s*(.+)\\s+([&|])\\s+(\\w+)\\s*(==|>=|<=|>|<)\\s*(\\w+)$");
+    regex select2Rgx("^SELECT\\s+(?:\\((.*)\\)|(\\*))\\s+FROM\\s+([a-zA-Z0-9]+)\\s+WHERE\\s+(\\w+)\\s*(==|>=|<=|>|<)\\s*(\\w+)\\s+([&|])\\s+(\\w+)\\s*(==|>=|<=|>|<)\\s*(\\w+)$");
     if (regex_search(q, matches, select2Rgx)) {
         string tableName = matches[3].str();
         string conditionColumn1 = matches[4].str();
@@ -136,8 +146,24 @@ void Database::query(string q) {
         for (Record* record : result) record->print();
         return;
     }
-    regex deleteRgx("^DELETE\\s+FROM\\s+([a-zA-Z0-9]+)\\s+WHERE\\s+(\\w+)\\s*(==|>=|<=|>|<)\\s*(\\w+)$");
-    if (regex_search(q, matches, deleteRgx)) {
+    regex delete1Rgx("^DELETE\\s+FROM\\s+([a-zA-Z0-9]+)\\s+WHERE\\s+(\\w+)\\s*(==|>=|<=|>|<)\\s*(\\w+)\\s+([&|])\\s+(\\w+)\\s*(==|>=|<=|>|<)\\s*(\\w+)$");
+    if (regex_search(q, matches, delete1Rgx)) {
+        string tableName = matches[1].str();
+        string conditionColumn1 = matches[2].str();
+        string conditionOperator1 = matches[3].str();
+        string conditionValue1 = matches[4].str();
+        char mergeOperator = matches[5].str()[0];
+        string conditionColumn2 = matches[6].str();
+        string conditionOperator2 = matches[7].str();
+        string conditionValue2 = matches[8].str();
+        deleteTwoFromTable(tableName,
+                           conditionColumn1, convertStringToOperator(conditionOperator1), conditionValue1,
+                           conditionColumn2, convertStringToOperator(conditionOperator2), conditionValue2,
+                           mergeOperator);
+        return;
+    }
+    regex delete2Rgx("^DELETE\\s+FROM\\s+([a-zA-Z0-9]+)\\s+WHERE\\s+(\\w+)\\s*(==|>=|<=|>|<)\\s*(\\w+)$");
+    if (regex_search(q, matches, delete2Rgx)) {
         string tableName = matches[1].str();
         string conditionColumn = matches[2].str();
         string conditionOperator = matches[3].str();

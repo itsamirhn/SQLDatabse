@@ -25,7 +25,11 @@ class Database {
                                         string column1, Operator op1, string value1,
                                         string column2, Operator op2, string value2,
                                         char mergeOp);
-    vector<int> deleteFromTable(string tableName, string column, Operator op, string value);
+    vector<int> deleteOneFromTable(string tableName, string column, Operator op, string value);
+    vector<int> deleteTwoFromTable(string tableName,
+                                   string column1, Operator op1, string value1,
+                                   string column2, Operator op2, string value2,
+                                   char mergeOp);
     void updateTable(string tableName, string *data, string column, Operator op, string value);
 public:
     void query(string q);
