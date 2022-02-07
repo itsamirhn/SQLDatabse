@@ -79,7 +79,7 @@ void Database::updateTwoFromTable(string tableName, string *data, string column1
 
 vector<string> Database::extractDataVector(string q) {
     smatch matches;
-    regex commaSepRgx("\\s*(.+?)(?:,|$)");
+    regex commaSepRgx("\\s*(.+?)\\s*(?:,|$)");
     vector<string> v;
     while (regex_search(q, matches, commaSepRgx)) {
         v.push_back(matches[1].str());
@@ -123,21 +123,7 @@ void Database::query(string q) {
         insertToTable(tableName, data);
         return;
     }
-    regex select1Rgx("^SELECT\\s+(?:\\((.*)\\)|(\\*))\\s+FROM\\s+([a-zA-Z0-9]+)\\s+WHERE\\s+(\\w+)\\s*(==|>=|<=|>|<)\\s*(\\S+)$");
-    if (regex_search(q, matches, select1Rgx)) {
-        string tableName = matches[3].str();
-        string conditionColumn = matches[4].str();
-        string conditionOperator = matches[5].str();
-        string conditionValue = matches[6].str();
-        vector<string> columns;
-        if (matches[2].str() == "*") columns = getTable(tableName)->getColumnTitles();
-        else columns = extractDataVector(matches[1].str());
-        vector<Record *> result = selectOneFromTable(tableName, columns, conditionColumn,
-                                                     convertStringToOperator(conditionOperator), conditionValue);
-        for (Record* record : result) record->print();
-        return;
-    }
-    regex select2Rgx("^SELECT\\s+(?:\\((.*)\\)|(\\*))\\s+FROM\\s+([a-zA-Z0-9]+)\\s+WHERE\\s+(\\w+)\\s*(==|>=|<=|>|<)\\s*(\\S+)\\s+([&|])\\s+(\\w+)\\s*(==|>=|<=|>|<)\\s*(\\S+)$");
+    regex select2Rgx("^SELECT\\s+(?:\\((.*)\\)|(\\*))\\s+FROM\\s+([a-zA-Z0-9]+)\\s+WHERE\\s+(\\w+)\\s*(==|>=|<=|>|<)\\s*(.+)\\s+([&|])\\s+(\\w+)\\s*(==|>=|<=|>|<)\\s*(.+)$");
     if (regex_search(q, matches, select2Rgx)) {
         string tableName = matches[3].str();
         string conditionColumn1 = matches[4].str();
@@ -157,16 +143,21 @@ void Database::query(string q) {
         for (Record* record : result) record->print();
         return;
     }
-    regex delete1Rgx("^DELETE\\s+FROM\\s+([a-zA-Z0-9]+)\\s+WHERE\\s+(\\w+)\\s*(==|>=|<=|>|<)\\s*(\\S+)$");
-    if (regex_search(q, matches, delete1Rgx)) {
-        string tableName = matches[1].str();
-        string conditionColumn = matches[2].str();
-        string conditionOperator = matches[3].str();
-        string conditionValue = matches[4].str();
-        deleteOneFromTable(tableName, conditionColumn, convertStringToOperator(conditionOperator), conditionValue);
+    regex select1Rgx("^SELECT\\s+(?:\\((.*)\\)|(\\*))\\s+FROM\\s+([a-zA-Z0-9]+)\\s+WHERE\\s+(\\w+)\\s*(==|>=|<=|>|<)\\s*(.+)$");
+    if (regex_search(q, matches, select1Rgx)) {
+        string tableName = matches[3].str();
+        string conditionColumn = matches[4].str();
+        string conditionOperator = matches[5].str();
+        string conditionValue = matches[6].str();
+        vector<string> columns;
+        if (matches[2].str() == "*") columns = getTable(tableName)->getColumnTitles();
+        else columns = extractDataVector(matches[1].str());
+        vector<Record *> result = selectOneFromTable(tableName, columns, conditionColumn,
+                                                     convertStringToOperator(conditionOperator), conditionValue);
+        for (Record* record : result) record->print();
         return;
     }
-    regex delete2Rgx("^DELETE\\s+FROM\\s+([a-zA-Z0-9]+)\\s+WHERE\\s+(\\w+)\\s*(==|>=|<=|>|<)\\s*(\\S+)\\s+([&|])\\s+(\\w+)\\s*(==|>=|<=|>|<)\\s*(\\S+)$");
+    regex delete2Rgx("^DELETE\\s+FROM\\s+([a-zA-Z0-9]+)\\s+WHERE\\s+(\\w+)\\s*(==|>=|<=|>|<)\\s*(.+)\\s+([&|])\\s+(\\w+)\\s*(==|>=|<=|>|<)\\s*(.+)$");
     if (regex_search(q, matches, delete2Rgx)) {
         string tableName = matches[1].str();
         string conditionColumn1 = matches[2].str();
@@ -182,20 +173,16 @@ void Database::query(string q) {
                            mergeOperator);
         return;
     }
-    regex update1Rgx("^UPDATE\\s+([a-zA-Z0-9]+)\\s+SET\\s+\\((.*)\\)\\s+WHERE\\s+(\\w+)\\s*(==|>=|<=|>|<)\\s*(\\S+)$");
-    if (regex_search(q, matches, update1Rgx)) {
+    regex delete1Rgx("^DELETE\\s+FROM\\s+([a-zA-Z0-9]+)\\s+WHERE\\s+(\\w+)\\s*(==|>=|<=|>|<)\\s*(.+)$");
+    if (regex_search(q, matches, delete1Rgx)) {
         string tableName = matches[1].str();
-        vector<string> v = extractDataVector(matches[2].str());
-        string conditionColumn = matches[3].str();
-        string conditionOperator = matches[4].str();
-        string conditionValue = matches[5].str();
-        int c = v.size();
-        string *data = new string [c];
-        for (int i = 0; i < c; i++) data[i] = v[i];
-        updateOneFromTable(tableName, data, conditionColumn, convertStringToOperator(conditionOperator), conditionValue);
+        string conditionColumn = matches[2].str();
+        string conditionOperator = matches[3].str();
+        string conditionValue = matches[4].str();
+        deleteOneFromTable(tableName, conditionColumn, convertStringToOperator(conditionOperator), conditionValue);
         return;
     }
-    regex update2Rgx("^UPDATE\\s+([a-zA-Z0-9]+)\\s+SET\\s+\\((.*)\\)\\s+WHERE\\s+(\\w+)\\s*(==|>=|<=|>|<)\\s*(\\S+)\\s+([&|])\\s+(\\w+)\\s*(==|>=|<=|>|<)\\s*(\\S+)$");
+    regex update2Rgx("^UPDATE\\s+([a-zA-Z0-9]+)\\s+SET\\s+\\((.*)\\)\\s+WHERE\\s+(\\w+)\\s*(==|>=|<=|>|<)\\s*(.+)\\s+([&|])\\s+(\\w+)\\s*(==|>=|<=|>|<)\\s*(.+)$");
     if (regex_search(q, matches, update2Rgx)) {
         string tableName = matches[1].str();
         vector<string> v = extractDataVector(matches[2].str());
@@ -213,6 +200,19 @@ void Database::query(string q) {
                            conditionColumn1, convertStringToOperator(conditionOperator1), conditionValue1,
                            conditionColumn2, convertStringToOperator(conditionOperator2), conditionValue2,
                            mergeOperator);
+        return;
+    }
+    regex update1Rgx("^UPDATE\\s+([a-zA-Z0-9]+)\\s+SET\\s+\\((.*)\\)\\s+WHERE\\s+(\\w+)\\s*(==|>=|<=|>|<)\\s*(.+)$");
+    if (regex_search(q, matches, update1Rgx)) {
+        string tableName = matches[1].str();
+        vector<string> v = extractDataVector(matches[2].str());
+        string conditionColumn = matches[3].str();
+        string conditionOperator = matches[4].str();
+        string conditionValue = matches[5].str();
+        int c = v.size();
+        string *data = new string [c];
+        for (int i = 0; i < c; i++) data[i] = v[i];
+        updateOneFromTable(tableName, data, conditionColumn, convertStringToOperator(conditionOperator), conditionValue);
         return;
     }
     regex printRgx("PRINT\\s+([a-zA-Z0-9]+)");
