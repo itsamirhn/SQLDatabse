@@ -18,7 +18,7 @@ class Database {
     vector<string> extractDataVector(string q);
     Table *getTable(string name);
     void createTable(string name, int column, string* titles, Type* types);
-    void insertToTable(string tableName, string *data);
+    void insertToTable(string tableName, string *data, int c);
     vector<Record *> selectOneFromTable(string tableName, vector<string> columns, string column, Operator op, string value);
     vector<Record *> selectTwoFromTable(string tableName, vector<string> columns,
                                         string column1, Operator op1, string value1,
@@ -29,8 +29,8 @@ class Database {
                                    string column1, Operator op1, string value1,
                                    string column2, Operator op2, string value2,
                                    char mergeOp);
-    void updateOneFromTable(string tableName, string *data, string column, Operator op, string value);
-    void updateTwoFromTable(string tableName, string *data,
+    void updateOneFromTable(string tableName, string *data, int c, string column, Operator op, string value);
+    void updateTwoFromTable(string tableName, string *data, int c,
                      string column1, Operator op1, string value1,
                      string column2, Operator op2, string value2,
                      char mergeOp);

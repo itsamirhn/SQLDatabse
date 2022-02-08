@@ -18,9 +18,9 @@ void Database::createTable(string name, int column, string* titles, Type* types)
     T[name] = t;
 }
 
-void Database::insertToTable(string tableName, string *data) {
+void Database::insertToTable(string tableName, string *data, int c) {
     Table *t = getTable(tableName);
-    Record *r = new Record(t->c - 1, data, t->getColumnsTypes());
+    Record *r = new Record(c, data, t->getColumnsTypes());
     t->insert(r);
 }
 
@@ -59,17 +59,17 @@ vector<int> Database::deleteTwoFromTable(string tableName, string column1, Opera
     return t->remove(records);
 }
 
-void Database::updateOneFromTable(string tableName, string *data, string column, Operator op, string value) {
+void Database::updateOneFromTable(string tableName, string *data, int c, string column, Operator op, string value) {
     Table *t = getTable(tableName);
-    Record *r = new Record(t->c - 1, data, t->getColumnsTypes());
+    Record *r = new Record(c, data, t->getColumnsTypes());
     vector<int> ids = deleteOneFromTable(tableName, column, op, value);
     for (int id : ids) t->insert(r, id);
 }
 
-void Database::updateTwoFromTable(string tableName, string *data, string column1, Operator op1, string value1,
+void Database::updateTwoFromTable(string tableName, string *data, int c, string column1, Operator op1, string value1,
                                   string column2, Operator op2, string value2, char mergeOp) {
     Table *t = getTable(tableName);
-    Record *r = new Record(t->c - 1, data, t->getColumnsTypes());
+    Record *r = new Record(c, data, t->getColumnsTypes());
     vector<int> ids = deleteTwoFromTable(tableName,
                                          column1, op1, value1,
                                          column2, op2, value2,
@@ -120,7 +120,7 @@ void Database::query(string q) {
         int c = v.size();
         string *data = new string [c];
         for (int i = 0; i < c; i++) data[i] = v[i];
-        insertToTable(tableName, data);
+        insertToTable(tableName, data, c);
         return;
     }
     regex select2Rgx("^SELECT\\s+(?:\\((.*)\\)|(\\*))\\s+FROM\\s+([a-zA-Z0-9]+)\\s+WHERE\\s+(\\w+)\\s*(==|>=|<=|>|<)\\s*(.+)\\s+([&|])\\s+(\\w+)\\s*(==|>=|<=|>|<)\\s*(.+)$");
@@ -196,7 +196,7 @@ void Database::query(string q) {
         int c = v.size();
         string *data = new string [c];
         for (int i = 0; i < c; i++) data[i] = v[i];
-        updateTwoFromTable(tableName, data,
+        updateTwoFromTable(tableName, data, c
                            conditionColumn1, convertStringToOperator(conditionOperator1), conditionValue1,
                            conditionColumn2, convertStringToOperator(conditionOperator2), conditionValue2,
                            mergeOperator);
@@ -212,7 +212,7 @@ void Database::query(string q) {
         int c = v.size();
         string *data = new string [c];
         for (int i = 0; i < c; i++) data[i] = v[i];
-        updateOneFromTable(tableName, data, conditionColumn, convertStringToOperator(conditionOperator), conditionValue);
+        updateOneFromTable(tableName, data, c, conditionColumn, convertStringToOperator(conditionOperator), conditionValue);
         return;
     }
     regex printRgx("PRINT\\s+([a-zA-Z0-9]+)");
